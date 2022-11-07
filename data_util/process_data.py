@@ -83,6 +83,9 @@ if running_step == 1:
         _, frame = cap.read()
         if frame is None:
             break
+        # Resize and crop to (540,540)
+        frame = cv2.resize(frame, (frame.shape[1]//2, frame.shape[0]//2))
+        frame = frame[:, (frame.shape[1]-frame.shape[0])//2 : (frame.shape[1]+frame.shape[0])//2]
         cv2.imwrite(os.path.join(ori_imgs_dir, str(frame_num) + '.jpg'), frame)
         frame_num = frame_num + 1
     cap.release()
@@ -97,8 +100,8 @@ if running_step == 2:
             if image_path.endswith('.jpg'):
                 input = io.imread(os.path.join(ori_imgs_dir, image_path))[:, :, :3]
                 preds = fa.get_landmarks(input)
-                if len(preds) > 0:
-                    lands = preds[0].reshape(-1, 2)[:,:2]
+                if len(preds) > 0:  # type: ignore
+                    lands = preds[0].reshape(-1, 2)[:,:2]  # type: ignore
                     np.savetxt(os.path.join(ori_imgs_dir, image_path[:-3] + 'lms'), lands, '%f')
         
 max_frame_num = 100000
@@ -122,7 +125,7 @@ if running_step == 3:
 # Step 4: extract bc image
 if running_step == 4:
     print('--- Step 4: extract background image ---')
-    sel_ids = np.array(valid_img_ids)[np.arange(0, valid_img_num, 20)]
+    sel_ids = np.array(valid_img_ids)[np.arange(0, valid_img_num, 100)]
     all_xys = np.mgrid[0:h, 0:w].reshape(2, -1).transpose()
     distss = []
     for i in sel_ids:
@@ -133,6 +136,7 @@ if running_step == 4:
         nbrs = NearestNeighbors(n_neighbors=1, algorithm='kd_tree').fit(fg_xys)
         dists, _ = nbrs.kneighbors(all_xys)
         distss.append(dists)
+        print(i)
     distss = np.stack(distss)
     print(distss.shape)
     max_dist = np.max(distss, 0)
@@ -147,7 +151,7 @@ if running_step == 4:
         imgs.append(img)
     imgs = np.stack(imgs).reshape(-1, num_pixs, 3)
     bc_img = np.zeros((h*w, 3), dtype=np.uint8)
-    bc_img[bc_pixs_id, :] = imgs[bc_ids, bc_pixs_id, :]
+    bc_img[bc_pixs_id, :] = imgs[bc_ids, bc_pixs_id, :]  # type: ignore
     bc_img = bc_img.reshape(h, w, 3)
     max_dist = max_dist.reshape(h, w)
     bc_pixs = max_dist > 5
@@ -216,13 +220,13 @@ if running_step == 7:
         for i in ids:
             i = i.item()
             frame_dict = dict()
-            frame_dict['img_id'] = int(valid_img_ids[i])
-            frame_dict['aud_id'] = int(valid_img_ids[i])
-            pose[:3, :3] = rot_inv[i]
+            frame_dict['img_id'] = int(valid_img_ids[i])  # type: ignore
+            frame_dict['aud_id'] = int(valid_img_ids[i])  # type: ignore
+            pose[:3, :3] = rot_inv[i]  # type: ignore
             pose[:3, 3] = trans_inv[i, :, 0]
             frame_dict['transform_matrix'] = pose.numpy().tolist()
             lms = np.loadtxt(os.path.join(
-                ori_imgs_dir, str(valid_img_ids[i]) + '.lms'))
+                ori_imgs_dir, str(valid_img_ids[i]) + '.lms'))  # type: ignore
             min_x, max_x = np.min(lms, 0)[0], np.max(lms, 0)[0]
             cx = int((min_x+max_x)/2.0)
             cy = int(lms[27, 1])
@@ -280,4 +284,4 @@ if running_step == 7:
         file.write('with_test = ' + str(1) + '\n')
         file.write('test_pose_file = transforms_val.json' + '\n')
 
-    print(id + ' data processed done!')
+    print(id + ' data processing done!')

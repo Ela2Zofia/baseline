@@ -99,12 +99,12 @@ def prepare_deepspeech_net(deepspeech_pb_path):
     with tf.io.gfile.GFile(deepspeech_pb_path, "rb") as f:
         graph_def = tf.compat.v1.GraphDef()
         graph_def.ParseFromString(f.read())
-
     graph = tf.compat.v1.get_default_graph()
-    tf.import_graph_def(graph_def, name="deepspeech")
-    logits_ph = graph.get_tensor_by_name("deepspeech/logits:0")
-    input_node_ph = graph.get_tensor_by_name("deepspeech/input_node:0")
-    input_lengths_ph = graph.get_tensor_by_name("deepspeech/input_lengths:0")
+    tf.compat.v1.import_graph_def(graph_def, name="deepspeech")
+    # print([n.name for n in graph.as_graph_def().node])
+    logits_ph = graph.get_tensor_by_name("logits:0")
+    input_node_ph = graph.get_tensor_by_name("input_node:0")
+    input_lengths_ph = graph.get_tensor_by_name("input_lengths:0")
 
     return graph, logits_ph, input_node_ph, input_lengths_ph
 

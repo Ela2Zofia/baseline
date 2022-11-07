@@ -178,7 +178,7 @@ for iter in range(2000):
             param_group['lr'] *= 0.2
 print(loss_lan.item(), torch.mean(trans[:, 2]).item())
 
-batch_size = 50
+batch_size = 16
 
 
 device_default = torch.device('cuda:0')

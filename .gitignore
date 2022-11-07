@@ -161,3 +161,10 @@ cython_debug/
 .vscode/
 
 pytorch3d/
+
+
+dataset/
+!dataset/vids
+
+*.mat
+data_util/face_tracking/3DMM/3DMM_info.npy
